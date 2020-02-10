@@ -104,7 +104,8 @@ def fisher_method(a1, a2, max_iterations, print_option):
 
 a1 = 0.5
 a2 = 0.5
-newts = newton_method(a1, a2, 100, 0)
+newts = newton_method(a1, a2, 8, 0)
 newtons_hess = np.asarray(newtons_hess)
-fish = fisher_method(a1, a2, 100, 0)
-print(newts[-5: ], newtons_hess[-5: ])
+fish = fisher_method(a1, a2, 10, 0)
+fishers_hess = np.asarray(fishers_hess)
+print(fish[-5: ], fishers_hess[-5: ])
