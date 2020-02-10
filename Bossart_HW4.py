@@ -29,10 +29,12 @@ def llprime2(a1, a2):
     summation=summation.sum(axis=0)
     return -summation
 
+newtons_hess=[]
 def newt_step(a1, a2):
-    ie = np.linalg.inv(llprime2(a1,a2))
+    ie = -np.linalg.inv(llprime2(a1,a2))
+    newtons_hess.append(ie)
     jj = llprime(a1,a2)
-    return -ie@jj
+    return ie@jj
 
 def newton_method(a1, a2, max_iterations, print_option):
     num_iterations = 0
@@ -58,7 +60,7 @@ def newton_method(a1, a2, max_iterations, print_option):
         print('Approximation values: ', alpha_ones[-1], alpha_twos[-1])
         print('Number of iterations: ', num_iterations)
         
-        
+fishers_hess = []      
 def fisher_step(a1, a2):
     summation = []
     alpha = np.asarray((a1,a2)).T
@@ -67,6 +69,7 @@ def fisher_step(a1, a2):
     summation=np.asarray(summation)
     summation=summation.sum(axis=0)
     fisherinv = np.linalg.inv(-summation)
+    fishers_hess.append(fisherinv)
     step = fisherinv@llprime(a1, a2)
     return step;
         
@@ -94,11 +97,14 @@ def fisher_method(a1, a2, max_iterations, print_option):
         print('Starting values: ', alpha_ones[0], alpha_twos[0])
         print('Approximation values: ', alpha_ones[-1], alpha_twos[-1])
         print('Number of iterations: ', num_iterations)
+        print()
     
     
     
-    
+
 a1 = 0.5
 a2 = 0.5
-newton_method(a1, a2, 100, 1)
-fisher_method(a1, a2, 100, 1)
+newts = newton_method(a1, a2, 100, 0)
+newtons_hess = np.asarray(newtons_hess)
+fish = fisher_method(a1, a2, 100, 0)
+print(newts[-5: ], newtons_hess[-5: ])
