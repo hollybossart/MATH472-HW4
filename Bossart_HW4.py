@@ -8,64 +8,97 @@ data = pd.read_csv("oilspills.dat", delimiter = " ")
 year = data['year'].to_numpy().reshape((26,1))
 N = data['spills'].to_numpy().reshape((26,1))
 b = data[['importexport', 'domestic']].to_numpy().reshape((26,2))
-n = 26
+n = len(year)
 
-def llprime(alpha):
-    alpha = np.asarray(alpha).reshape((2,1))
-    temp = []
+def llprime(a1, a2):
+    summation = []
+    alpha = np.asarray((a1,a2)).T
     for i in range(n):
-        dotproduct = np.dot(b[i], alpha)
-        val = (N[i]/dotproduct) - 1
-        temp.append(val*b[i])
-    temp = np.asarray(temp)
-    final = np.sum(temp, axis = 0)
-    return final;
+        summation.append(N[i]*b[i]/(b[i]@alpha)-b[i])
+    summation=np.asarray(summation)
+    summation=summation.sum(axis=0)
+    return summation
 
 #def llprime2
-def llprime2(alpha):
-    alpha = np.asarray(alpha).reshape((2,1))
-    temp = []
+def llprime2(a1, a2):
+    summation = []
+    alpha = np.asarray((a1,a2)).T
     for i in range(n):
-        dotproduct2 = np.dot(b[i], alpha)**2
-        val = -(N[i]/dotproduct2)
-        bitrans = np.transpose(b[i])
-        temp.append(val*np.outer(b[i],bitrans))
-    temp = np.asarray(temp)
-    final = np.sum(temp, axis = 0)
-    return final;
+        summation.append((N[i]/(b[i]@alpha)**2)*b[i].reshape(-1,1)@b[i].reshape(1,2))
+    summation=np.asarray(summation)
+    summation=summation.sum(axis=0)
+    return -summation
 
-alpha = [1, 1]
+def newt_step(a1, a2):
+    ie = np.linalg.inv(llprime2(a1,a2))
+    jj = llprime(a1,a2)
+    return -ie@jj
 
-def newton_method(alpha, tol, max_iterations, print_option):
-    alpha_vals = np.asarray([alpha])
+def newton_method(a1, a2, max_iterations, print_option):
     num_iterations = 0
+    alpha_ones = []
+    alpha_twos = []
+    alpha_iter = np.asarray((a1,a2)).T
     
-    
-    while abs(num_iterations < max_iterations):
-        old_alpha = alpha_vals[num_iterations].reshape(2,1)
-        new_alpha = old_alpha - step(old_alpha)
+    while num_iterations < max_iterations:
+        alpha_ones.append(alpha_iter[0])
+        alpha_twos.append(alpha_iter[1])
+        alpha_iter = alpha_iter + newt_step(alpha_iter[0],alpha_iter[1]) 
         num_iterations += 1
-        np.append(alpha_vals, new_alpha)
-        alpha = new_alpha
-        
-    alpha = np.asarray(alpha)
-    # at this point we have broken out of the while loop    
-    if num_iterations == max_iterations:
-        print("Exceeded maximum number of iterations.")
-        return
-        
-    # this is where we hope to be if newtons went well    
-    if print_option == 1:
-        print('\n')
-        print("Starting value: " + str(alpha_vals[0]))
-        sol = alpha_vals[-1]
-        print("Number of iterations: " + str(num_iterations) + " \nTolerance: " + str(tol))
-        print("Final solution: " + str(sol))
-        return
-    
-    if print_option == 0:
-        return alpha_vals[-1]
-    
 
-alpha = [0.5, 0.5]
-print(newton_method(alpha, 1e-6, 1000, 1))
+    if print_option == 0:
+        alpha_ones = np.asarray(alpha_ones).reshape(num_iterations, 1)
+        alpha_twos = np.asarray(alpha_twos).reshape(num_iterations, 1)
+        alphas = np.hstack((alpha_ones, alpha_twos))
+        return alphas
+    
+    if print_option == 1:
+        print('Using Newtons method')
+        print('Starting values: ', alpha_ones[0], alpha_twos[0])
+        print('Approximation values: ', alpha_ones[-1], alpha_twos[-1])
+        print('Number of iterations: ', num_iterations)
+        
+        
+def fisher_step(a1, a2):
+    summation = []
+    alpha = np.asarray((a1,a2)).T
+    for i in range(n):
+        summation.append((-1/(b[i]@alpha))*b[i].reshape(-1,1)@b[i].reshape(1,2))
+    summation=np.asarray(summation)
+    summation=summation.sum(axis=0)
+    fisherinv = np.linalg.inv(-summation)
+    step = fisherinv@llprime(a1, a2)
+    return step;
+        
+
+def fisher_method(a1, a2, max_iterations, print_option):
+    num_iterations = 0
+    alpha_ones = []
+    alpha_twos = []
+    alpha_iter = np.asarray((a1,a2)).T
+    
+    while num_iterations < max_iterations:
+        alpha_ones.append(alpha_iter[0])
+        alpha_twos.append(alpha_iter[1])
+        alpha_iter = alpha_iter + fisher_step(alpha_iter[0],alpha_iter[1]) 
+        num_iterations += 1
+
+    if print_option == 0:
+        alpha_ones = np.asarray(alpha_ones).reshape(num_iterations, 1)
+        alpha_twos = np.asarray(alpha_twos).reshape(num_iterations, 1)
+        alphas = np.hstack((alpha_ones, alpha_twos))
+        return alphas
+    
+    if print_option == 1:
+        print('\nUsing Fishers method')
+        print('Starting values: ', alpha_ones[0], alpha_twos[0])
+        print('Approximation values: ', alpha_ones[-1], alpha_twos[-1])
+        print('Number of iterations: ', num_iterations)
+    
+    
+    
+    
+a1 = 0.5
+a2 = 0.5
+newton_method(a1, a2, 100, 1)
+fisher_method(a1, a2, 100, 1)
