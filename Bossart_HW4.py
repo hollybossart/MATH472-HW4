@@ -108,4 +108,15 @@ newts = newton_method(a1, a2, 8, 0)
 newtons_hess = np.asarray(newtons_hess)
 fish = fisher_method(a1, a2, 10, 0)
 fishers_hess = np.asarray(fishers_hess)
-print(fish[-5: ], fishers_hess[-5: ])
+
+alpha1_se = []
+alpha2_se = []
+def mle_se():
+    
+    for i in range(4,10):
+        alpha1_se.append(np.sqrt(fishers_hess[i, 0, 0]))
+        alpha2_se.append(np.sqrt(fishers_hess[i, 1, 1]))
+    print(alpha1_se)
+    print(alpha2_se)
+
+mle_se()
