@@ -147,30 +147,32 @@ def mle_se():
 
 mle_se()
 
-
+steep1 = []
+steep2 = []
 
 def steep_ascent(a1, a2, scale, max_iterations, print_option):
     identity = np.identity(2)
     alpha = np.asarray((a1, a2)).reshape((2,1))
-    alpha_ones = [a1]
-    alpha_twos = [a2]
+    steep1.append(a1)
+    steep2.append(a2)
+    num_iters = 1
 
     for i in range(max_iterations):
         new = alpha + scale*identity.dot(llprime(alpha[0], alpha[1])) 
 
         if loglike(new[0], new[1]) > loglike(alpha[0], alpha[1]):
             alpha = new
-            alpha_ones.append(alpha[0])
-            alpha_twos.append(alpha[1])
+            steep1.append(alpha[0])
+            steep2.append(alpha[1])
+            num_iters +=1
             
         else:
             scale = scale / 2.0
             
     if print_option == 0:
-        alpha_ones = np.asarray(alpha_ones).reshape(max_iterations, 1)
-        alpha_twos = np.asarray(alpha_twos).reshape(max_iterations, 1)
-        alphas = np.hstack((alpha_ones, alpha_twos))
-        return alphas
+        alpha_ones = np.asarray(steep1).reshape(num_iters, 1)
+        alpha_twos = np.asarray(steep2).reshape(num_iters, 1)
+        return 
     
     if print_option == 1:
         print('\nUsing steepest ascent method')
@@ -179,13 +181,14 @@ def steep_ascent(a1, a2, scale, max_iterations, print_option):
         print()
     
     
-steep_ascent(a1, a2, 1, 100, 1)
+steep_ascent(a1, a2, 1, 100, 0)
 m = -fisher(0.5, 0.5)
-
-
+quasi1 = []
+quasi2 = []
 def update_hessian(alpha0, alpha1, m, max_iterations):
     num_iter = 0
-    alph_list = [alpha0, alpha1]
+    quasi1.append(alpha0[0])
+    quasi2.append(alpha1[0])
     
     while num_iter < max_iterations:
         z = alpha1 - alpha0
@@ -202,12 +205,14 @@ def update_hessian(alpha0, alpha1, m, max_iterations):
                
         temp = alpha1
         alpha1 = alpha0 - np.dot(inv(m), llprime(alpha0[0], alpha0[1]))
-        alph_list.append(alpha1)
+        quasi1.append(alpha1[0])
+        quasi2.append(alpha1[1])
         alpha0 = temp
         num_iter += 1
-        
-    print(alpha1)
-    return
+    print() 
+    return 
 
 startalpha = np.asarray([0.5, 0.5]).reshape((2,1))
-update_hessian(startalpha,startalpha, m, 100)
+update_hessian(startalpha,startalpha, m, 30) 
+quasi1 = np.asarray(quasi1).reshape((31,1))
+quasi2 = np.asarray(quasi2).reshape((31,1))
